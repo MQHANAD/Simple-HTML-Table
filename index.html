@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Table Display</title>
+    <style>
+        table {
+            width: 50%;
+            border-collapse: collapse;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Table 1 - CSV Data</h2>
+    <table id="csv-table">
+        <thead>
+            <tr>
+                <th>Index #</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <h2>Table 2 - Processed Data</h2>
+    <table id="processed-table">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        // Fetch CSV data from the /data endpoint
+        fetch('/data')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load CSV data.');
+                }
+                return response.text();
+            })
+            .then(csvText => {
+                processCSV(csvText);
+            })
+            .catch(error => {
+                console.error('Error fetching CSV data:', error);
+            });
+
+        // Process the CSV text data
+        function processCSV(csvText) {
+            const rows = csvText.trim().split('\n').slice(1); // Skip header row and trim any extra whitespace
+            const csvTableBody = document.querySelector("#csv-table tbody");
+            const processedData = {}; // Store values for further calculations
+            csvTableBody.innerHTML = ''; // Clear previous table content
+
+            // Loop through each row and populate the first table
+            rows.forEach(row => {
+                const [index, value] = row.split(',').map(item => item.trim());
+
+                // Check if both values are valid before processing
+                if (index && value) {
+                    processedData[index] = parseInt(value, 10); // Store for calculations
+
+                    // Create a new row in the table for each valid index/value
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `<td>${index}</td><td>${value}</td>`;
+                    csvTableBody.appendChild(tr);
+                }
+            });
+
+            // Display the processed data in the second table
+            displayProcessedTable(processedData);
+        }
+
+        // Display processed data in the second table
+        function displayProcessedTable(data) {
+            const processedTableBody = document.querySelector("#processed-table tbody");
+            processedTableBody.innerHTML = ''; // Clear previous processed data
+
+            // Define processed data based on specific keys
+            const processedData = [
+                { category: "Alpha", value: (data["A5"] + data["A20"]) || 0 },
+                { category: "Beta", value: (data["A15"] / data["A7"]) || 0 },
+                { category: "Charlie", value: (data["A13"] * data["A12"]) || 0 }
+            ];
+
+            // Loop through processed data and add rows to the table
+            processedData.forEach(item => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td>${item.category}</td><td>${item.value.toFixed(2)}</td>`;
+                processedTableBody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+
+</html>
+
+
